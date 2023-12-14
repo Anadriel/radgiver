@@ -1,8 +1,15 @@
 name := "radgiver"
 organization := "com.github.fermorg"
-
 scalaVersion := "3.3.1"
 
+// Versioning
+inThisBuild(
+  Seq(
+    dynverSeparator := "-"
+  )
+)
+
+// Dependencies
 libraryDependencies ++= Seq(
   "dev.zio" %% "zio" % "2.0.19",
   "dev.zio" %% "zio-json" % "0.6.2",
@@ -15,4 +22,42 @@ libraryDependencies ++= Seq(
   "com.google.cloud" % "google-cloud-aiplatform" % "3.32.0",
 )
 
-publish / skip := true
+// Docker
+import com.typesafe.sbt.packager.docker.{Cmd, DockerPermissionStrategy}
+
+enablePlugins(JavaAppPackaging, LauncherJarPlugin, DockerPlugin)
+
+dockerBaseImage := "bellsoft/liberica-runtime-container:jre-21-slim-musl"
+
+dockerRepository := sys.env.get("DOCKER_REGISTRY").map(_.stripSuffix("/"))
+packageName := s"${name.value}-service"
+
+dockerExposedPorts := List(8080)
+
+dockerPermissionStrategy := DockerPermissionStrategy.None
+dockerCommands := dockerCommands.value.filter {
+  case Cmd("USER", _*) => false
+  case _               => true
+}
+
+dockerEntrypoint := Seq(
+  "java",
+  "-jar",
+  s"/opt/docker/lib/${(packageJavaLauncherJar / artifactPath).value.getName}",
+)
+makeBashScripts := Seq()
+makeBatScripts := Seq()
+
+// Publishing
+Compile / packageDoc / publishArtifact := false
+Compile / packageSrc / publishArtifact := false
+
+stage := (Docker / stage).value
+publishLocal := (Docker / publishLocal).value
+publish := {
+  if (dockerRepository.value.isDefined) {
+    (Docker / publish).value
+  } else {
+    ()
+  }
+}
