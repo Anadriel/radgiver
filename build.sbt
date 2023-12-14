@@ -13,5 +13,5 @@ libraryDependencies ++= Seq(
   "dev.zio" %% "zio-config-magnolia" % "4.0.0-RC16",
   "com.softwaremill.quicklens" %% "quicklens" % "1.9.6",
   "com.github.jwt-scala" %% "jwt-zio-json" % "9.4.5",
-  "com.google.cloud" % "google-cloud-aiplatform" % "3.32.0"
+  "com.google.cloud" % "google-cloud-aiplatform" % "3.32.0",
 )

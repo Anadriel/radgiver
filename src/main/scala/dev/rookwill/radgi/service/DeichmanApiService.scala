@@ -12,6 +12,8 @@ trait DeichmanApiService {
 }
 
 object DeichmanApiService {
+
   val layer: RLayer[DeichmanApiConfig with Client, DeichmanApiService] =
     ???
+
 }

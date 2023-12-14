@@ -1,6 +1,6 @@
 package dev.rookwill.radgi.http
 
-import zio.{ZIO, http}
+import zio.{http, ZIO}
 import zio.http.*
 import zio.json.ast.Json
 import zio.json.*

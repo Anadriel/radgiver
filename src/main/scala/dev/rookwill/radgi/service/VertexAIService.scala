@@ -3,18 +3,13 @@ package dev.rookwill.radgi.service
 import com.google.cloud.aiplatform.v1.{
   EndpointName,
   PredictionServiceClient,
-  PredictionServiceSettings
+  PredictionServiceSettings,
 }
 import com.google.protobuf.Value
 import com.google.protobuf.util.JsonFormat
 import com.softwaremill.quicklens.*
 import dev.rookwill.radgi.config.VertexAIConfig
-import dev.rookwill.radgi.model.vertexai.{
-  Instance,
-  Parameters,
-  Prediction,
-  Request
-}
+import dev.rookwill.radgi.model.vertexai.{Instance, Parameters, Prediction, Request}
 import zio.json.*
 import zio.stream.{ZPipeline, ZSink, ZStream}
 import zio.{RLayer, Scope, Task, ZIO, ZLayer}
@@ -25,13 +20,15 @@ trait VertexAIService {
   def predictChatPrompt(message: String): Task[Option[String]]
 
 }
+
 object VertexAIService {
 
   private class LiveVertexAIService(
-      client: PredictionServiceClient,
-      endpoint: EndpointName,
-      ctx: Request
+    client: PredictionServiceClient,
+    endpoint: EndpointName,
+    ctx: Request,
   ) extends VertexAIService {
+
     def predictChatPrompt(message: String): Task[Option[String]] = {
       val modifiedCtx = ctx
         .modify(_.instances.each.messages.each.content)
@@ -45,7 +42,7 @@ object VertexAIService {
               modifiedCtx.instances
                 .map(LiveVertexAIService.mkInstanceValue)
                 .asJava,
-              LiveVertexAIService.mkParametersValue(modifiedCtx.parameters)
+              LiveVertexAIService.mkParametersValue(modifiedCtx.parameters),
             )
         )
       response.flatMap {
@@ -61,8 +58,9 @@ object VertexAIService {
   private object LiveVertexAIService {
     private val parser = JsonFormat.parser
     private val printer = JsonFormat.printer
+
     private def mkInstanceValue(
-        instance: Instance
+      instance: Instance
     ): Value =
       val instanceValueBuilder = Value.newBuilder
       parser.merge(instance.toJson, instanceValueBuilder)
@@ -81,6 +79,7 @@ object VertexAIService {
           .map(_.candidates.headOption.map(_.content.trim))
       }
       .mapError(err => new Exception(err))
+
   }
 
   val layer: RLayer[Scope with VertexAIConfig, VertexAIService] = ZLayer {
@@ -111,9 +110,10 @@ object VertexAIService {
         config.project,
         config.location,
         config.publisher,
-        config.model
+        config.model,
       ),
-      ctx
+      ctx,
     )
   }
+
 }

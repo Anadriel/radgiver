@@ -24,6 +24,6 @@ object MainApp extends ZIOAppDefault:
           Server.defaultWithPort(8080),
           VertexAIService.layer,
           ZLayer.fromZIO(ZIO.config(VertexAIConfig.config)),
-          ZLayer.succeed(scope)
+          ZLayer.succeed(scope),
         )
     }
