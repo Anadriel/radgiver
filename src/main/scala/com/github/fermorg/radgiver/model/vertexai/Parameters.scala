@@ -1,4 +1,4 @@
-package dev.rookwill.radgi.model.vertexai
+package com.github.fermorg.radgiver.model.vertexai
 
 import zio.json.{DeriveJsonCodec, JsonCodec}
 

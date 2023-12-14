@@ -1,11 +1,11 @@
-package dev.rookwill.radgi
+package com.github.fermorg.radgiver
 
-import dev.rookwill.radgi.config.VertexAIConfig
-import dev.rookwill.radgi.http.HttpHandler
-import dev.rookwill.radgi.service.VertexAIService
-import zio.*
+import com.github.fermorg.radgiver.config.VertexAIConfig
+import com.github.fermorg.radgiver.http.HttpHandler
+import com.github.fermorg.radgiver.service.VertexAIService
 import zio.config.typesafe.TypesafeConfigProvider
-import zio.http.*
+import zio.http.Server
+import zio.{ConfigProvider, Runtime, Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
 
 object MainApp extends ZIOAppDefault:
 

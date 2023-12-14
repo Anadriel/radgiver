@@ -1,4 +1,4 @@
-package dev.rookwill.radgi.config
+package com.github.fermorg.radgiver.config
 
 import zio.Config
 import zio.config.magnolia.deriveConfig

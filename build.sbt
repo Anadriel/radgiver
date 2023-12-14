@@ -1,8 +1,7 @@
-scalaVersion := "3.3.1"
-
 name := "radgiver"
-organization := "anna.rookwill"
-version := "1.0"
+organization := "com.github.fermorg"
+
+scalaVersion := "3.3.1"
 
 libraryDependencies ++= Seq(
   "dev.zio" %% "zio" % "2.0.19",
@@ -15,3 +14,5 @@ libraryDependencies ++= Seq(
   "com.github.jwt-scala" %% "jwt-zio-json" % "9.4.5",
   "com.google.cloud" % "google-cloud-aiplatform" % "3.32.0",
 )
+
+publish / skip := true

@@ -1,7 +1,7 @@
-package dev.rookwill.radgi.service
+package com.github.fermorg.radgiver.service
 
-import dev.rookwill.radgi.config.DeichmanApiConfig
-import dev.rookwill.radgi.model.deichman.{EventInfo, EventRef}
+import com.github.fermorg.radgiver.config.DeichmanApiConfig
+import com.github.fermorg.radgiver.model.deichman.{EventInfo, EventRef}
 import zio.http.{Client, Request, URL, ZClient}
 import zio.{Chunk, RLayer, ZIO, ZLayer}
 import zio.stream.ZStream

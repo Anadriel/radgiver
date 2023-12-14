@@ -1,10 +1,10 @@
-package dev.rookwill.radgi.http
+package com.github.fermorg.radgiver.http
 
 import zio.{http, ZIO}
 import zio.http.*
 import zio.json.ast.Json
 import zio.json.*
-import dev.rookwill.radgi.service.VertexAIService
+import com.github.fermorg.radgiver.service.VertexAIService
 
 object HttpHandler:
 

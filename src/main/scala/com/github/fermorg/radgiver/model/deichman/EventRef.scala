@@ -1,4 +1,4 @@
-package dev.rookwill.radgi.model.deichman
+package com.github.fermorg.radgiver.model.deichman
 
 import zio.json.{DeriveJsonCodec, DeriveJsonEncoder, JsonCodec, JsonEncoder}
 

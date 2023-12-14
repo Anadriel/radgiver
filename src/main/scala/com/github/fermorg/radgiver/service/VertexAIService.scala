@@ -1,4 +1,4 @@
-package dev.rookwill.radgi.service
+package com.github.fermorg.radgiver.service
 
 import com.google.cloud.aiplatform.v1.{
   EndpointName,
@@ -8,8 +8,8 @@ import com.google.cloud.aiplatform.v1.{
 import com.google.protobuf.Value
 import com.google.protobuf.util.JsonFormat
 import com.softwaremill.quicklens.*
-import dev.rookwill.radgi.config.VertexAIConfig
-import dev.rookwill.radgi.model.vertexai.{Instance, Parameters, Prediction, Request}
+import com.github.fermorg.radgiver.config.VertexAIConfig
+import com.github.fermorg.radgiver.model.vertexai.{Instance, Parameters, Prediction, Request}
 import zio.json.*
 import zio.stream.{ZPipeline, ZSink, ZStream}
 import zio.{RLayer, Scope, Task, ZIO, ZLayer}
