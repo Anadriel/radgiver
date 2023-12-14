@@ -17,7 +17,7 @@ object DeichmanApiService {
 
   private class LiveDeichmanApiService(
     client: Client,
-    endpoint: URL
+    endpoint: URL,
   ) extends DeichmanApiService {
 
     private def extractEventRefs(data: String): Option[Chunk[EventRef]] =
@@ -54,7 +54,12 @@ object DeichmanApiService {
 
   }
 
-  val layer: RLayer[DeichmanApiConfig with Client, DeichmanApiService] =
-    ???
+  val layer: RLayer[DeichmanApiConfig with Client, DeichmanApiService] = ZLayer {
+    for {
+      config <- ZIO.service[DeichmanApiConfig]
+      endpoint <- ZIO.fromEither(URL.decode(config.eventsEndpoint))
+      client <- ZIO.service[Client]
+    } yield LiveDeichmanApiService(client, endpoint)
+  }
 
 }
