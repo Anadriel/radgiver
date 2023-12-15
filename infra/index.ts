@@ -43,7 +43,7 @@ const artifactRegistry =new gcp.artifactregistry.Repository("artifact-registry",
             id: "delete-untagged-images-after-1-day",
             action: "DELETE",
             condition:{
-                olderThan: "1d",
+                olderThan: "86400s", // 1 day in seconds
                 tagState: "UNTAGGED"
             }
         },
@@ -51,7 +51,7 @@ const artifactRegistry =new gcp.artifactregistry.Repository("artifact-registry",
             id: "delete-snapshot-images-after-7-days",
             action: "DELETE",
             condition:{
-                olderThan: "7d",
+                olderThan: "604800s", // 7 days in seconds
                 tagState: "TAGGED",
                 tagPrefixes: ["snapshot-"]
             }
@@ -60,7 +60,8 @@ const artifactRegistry =new gcp.artifactregistry.Repository("artifact-registry",
             id: "keep-25-most-recent-images",
             mostRecentVersions: {
                 keepCount: 25
-            }
+            },
+            action: "KEEP",
         }
     ]
 });
