@@ -29,12 +29,9 @@ object DeichmanApiService {
       yield chunk
 
     def eventRefs(from: Int = 0): ZStream[Any, Throwable, EventRef] = {
+      val updatedEndpoint = endpoint.withQueryParams("from" -> Chunk.single(from.toString))
       val eventRefChunk = for {
-        res <- client.request(
-          Request.get(
-            endpoint.withQueryParams("from" -> Chunk.single(from.toString))
-          )
-        )
+        res <- client.request(Request.get(updatedEndpoint))
         resBody <- res.body.asString
         eventRef <- ZIO
           .fromOption(extractEventRefs(resBody))

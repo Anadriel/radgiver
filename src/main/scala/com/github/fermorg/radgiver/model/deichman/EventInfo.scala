@@ -1,6 +1,6 @@
 package com.github.fermorg.radgiver.model.deichman
 
-import zio.json.{DeriveJsonCodec, JsonCodec}
+import zio.json.{DeriveJsonCodec, DeriveJsonDecoder, JsonCodec, JsonDecoder}
 
 case class EventInfo(
   title: String,
@@ -9,3 +9,4 @@ case class EventInfo(
 
 object EventInfo:
   given JsonCodec[EventInfo] = DeriveJsonCodec.gen[EventInfo]
+  given JsonDecoder[EventInfo] = DeriveJsonDecoder.gen[EventInfo]

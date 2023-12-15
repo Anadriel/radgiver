@@ -1,6 +1,6 @@
 package com.github.fermorg.radgiver.model.deichman
 
-import zio.json.{DeriveJsonCodec, DeriveJsonEncoder, JsonCodec, JsonEncoder}
+import zio.json.*
 
 import java.time.ZonedDateTime
 
@@ -15,5 +15,5 @@ case class EventRef(
 
 object EventRef:
 
-  given JsonCodec[EventRef] =
-    DeriveJsonCodec.gen[EventRef]
+  given JsonCodec[EventRef] = DeriveJsonCodec.gen[EventRef]
+  given JsonDecoder[EventRef] = DeriveJsonDecoder.gen[EventRef]
