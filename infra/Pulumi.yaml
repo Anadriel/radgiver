@@ -1,0 +1,6 @@
+name: radgiver-infra
+runtime: nodejs
+description: GCP infrastructure definition for radgiver
+config:
+  gcp:project: radgiver
+  gcp:region: europe-west1
