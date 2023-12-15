@@ -38,7 +38,31 @@ const artifactRegistry =new gcp.artifactregistry.Repository("artifact-registry",
     repositoryId: "artifact-registry",
     format: "DOCKER",
     description: "Artifact repository for Docker images",
-    cleanupPolicies: []
+    cleanupPolicies: [
+        {
+            id: "delete-untagged-images-after-1-day",
+            action: "DELETE",
+            condition:{
+                olderThan: "1d",
+                tagState: "UNTAGGED"
+            }
+        },
+        {
+            id: "delete-snapshot-images-after-7-days",
+            action: "DELETE",
+            condition:{
+                olderThan: "7d",
+                tagState: "TAGGED",
+                tagPrefixes: ["snapshot-"]
+            }
+        },
+        {
+            id: "keep-25-most-recent-images",
+            mostRecentVersions: {
+                keepCount: 25
+            }
+        }
+    ]
 });
 
 // ------------------------------

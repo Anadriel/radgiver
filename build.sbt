@@ -48,6 +48,14 @@ dockerEntrypoint := Seq(
 makeBashScripts := Seq()
 makeBatScripts := Seq()
 
+dockerAlias := {
+  if (isSnapshot.value) {
+    dockerAlias.value.withTag(dockerAlias.value.tag.map(t => s"snapshot-$t"))
+  } else {
+    dockerAlias.value
+  }
+}
+
 // Publishing
 Compile / packageDoc / publishArtifact := false
 Compile / packageSrc / publishArtifact := false
