@@ -2,13 +2,19 @@
   "name": "radgiver-infra",
   "main": "index.ts",
   "engines": {
-    "node": ">18"
+    "node": ">20"
   },
   "devDependencies": {
-    "@types/node": "^18"
+    "@types/node": "20.8.2",
+    "gts": "^5.2.0",
+    "typescript": "~5.2.0"
   },
   "dependencies": {
     "@pulumi/pulumi": "^3.0.0",
     "@pulumi/gcp": "^7.0.0"
+  },
+  "scripts": {
+    "lint": "gts lint",
+    "fix": "gts fix"
   }
 }

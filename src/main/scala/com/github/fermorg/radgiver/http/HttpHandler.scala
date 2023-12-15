@@ -38,17 +38,17 @@ object HttpHandler:
         }
         response.orDie
       case Method.GET -> Root / "events" =>
-        ZIO.service[DeichmanApiService].map{ das =>
+        ZIO.service[DeichmanApiService].map { das =>
           Response(
             status = Status.Ok,
             headers = Headers(Header.ContentType(MediaType.application.`json`)),
-            body = Body.fromStream(das.eventRefs(0).debug.map(_.toJson))
+            body = Body.fromStream(das.eventRefs(0).debug.map(_.toJson)),
           )
         }
-      case r@Method.GET -> Root / "events" / string =>
-        //TODO: fix this
+      case r @ Method.GET -> Root / "events" / string =>
+        // TODO: fix this
         ZIO.service[DeichmanApiService].flatMap { das =>
-          das.getEvent(r.url.fragment.get.raw).debug.map{ ei =>
+          das.getEvent(r.url.fragment.get.raw).debug.map { ei =>
             Response.json(ei.toJson)
           }
         }
