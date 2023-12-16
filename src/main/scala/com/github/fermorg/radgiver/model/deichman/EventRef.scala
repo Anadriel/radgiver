@@ -16,4 +16,3 @@ case class EventRef(
 object EventRef:
 
   given JsonCodec[EventRef] = DeriveJsonCodec.gen[EventRef]
-  given JsonDecoder[EventRef] = DeriveJsonDecoder.gen[EventRef]

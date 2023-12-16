@@ -1,56 +1,67 @@
 package com.github.fermorg.radgiver.http
 
+import com.github.fermorg.radgiver.model.http.ErrorResponse
 import zio.{http, ZIO}
 import zio.http.*
 import zio.json.ast.Json
 import zio.json.*
 import com.github.fermorg.radgiver.service.*
-import zio.http.Path.Segment
 
 object HttpHandler:
 
-  val routes: Http[VertexAIService with DeichmanApiService, Throwable, Request, Response] =
-    Http.collectZIO[Request] {
-      case r @ Method.POST -> Root / "verdict" =>
+  val routes: HttpApp[VertexAIService with DeichmanApiService, Response] = Http
+    .collectZIO[Request] {
+      case r @ Method.POST -> Root / "predict" =>
         val jsonBody = r.body.asString.map(_.fromJson[Json.Obj])
-        val response = jsonBody.flatMap {
+        jsonBody.flatMap {
           case Left(e) =>
             val msg = s"Failed to parse the input: $e"
-            ZIO
-              .debug(msg)
-              .as(Response.text(msg).withStatus(Status.BadRequest))
+            ZIO.succeed(
+              Response
+                .json(ErrorResponse(msg, Status.BadRequest.code).toJson)
+                .withStatus(Status.BadRequest)
+            )
           case Right(json) =>
             json.get("message").flatMap(_.asString) match
               case None =>
                 val msg = "Couldn't find value 'message'"
-                ZIO
-                  .debug(msg)
-                  .as(Response.text(msg).withStatus(Status.BadRequest))
+                ZIO.succeed(
+                  Response
+                    .json(ErrorResponse(msg, Status.BadRequest.code).toJson)
+                    .withStatus(Status.BadRequest)
+                )
               case Some(m) =>
                 ZIO
                   .serviceWithZIO[VertexAIService](_.predictChatPrompt(m))
                   .map {
-                    case Some(predictionContent) =>
-                      Response.text(predictionContent)
+                    case Some(prediction) =>
+                      Response.json(prediction.toJson)
                     case None =>
-                      Response.text("No prediction").withStatus(Status.Accepted)
+                      val msg = "Unable to predict anything"
+                      Response
+                        .json(ErrorResponse(msg, Status.InternalServerError.code).toJson)
+                        .withStatus(Status.InternalServerError)
                   }
         }
-        response.orDie
-      case Method.GET -> Root / "events" =>
-        ZIO.service[DeichmanApiService].map { das =>
-          Response(
-            status = Status.Ok,
-            headers = Headers(Header.ContentType(MediaType.application.`json`)),
-            body = Body.fromStream(das.eventRefs(0).debug.map(_.toJson)),
-          )
-        }
-      case r @ Method.GET -> Root / "events" / string =>
-        // TODO: fix this
-        ZIO.service[DeichmanApiService].flatMap { das =>
-          das.getEvent(r.url.fragment.get.raw).debug.map { ei =>
-            Response.json(ei.toJson)
-          }
-        }
 
+      case Method.GET -> Root / "events" =>
+        ZIO
+          .service[DeichmanApiService]
+          .flatMap(_.eventRefs)
+          .map { events =>
+            Response(
+              status = Status.Ok,
+              headers = Headers(Header.ContentType(MediaType.application.`json`)),
+              body = Body.fromString(events.toJson),
+            )
+          }
+
+      case Method.GET -> Root / "events" / id =>
+        ZIO
+          .service[DeichmanApiService]
+          .flatMap(_.getEvent(id))
+          .map(event => Response.json(event.toJson))
+    }
+    .mapError { e =>
+      Response.json(ErrorResponse.fromError(e).toJson).withStatus(Status.InternalServerError)
     }

@@ -9,4 +9,3 @@ case class EventInfo(
 
 object EventInfo:
   given JsonCodec[EventInfo] = DeriveJsonCodec.gen[EventInfo]
-  given JsonDecoder[EventInfo] = DeriveJsonDecoder.gen[EventInfo]

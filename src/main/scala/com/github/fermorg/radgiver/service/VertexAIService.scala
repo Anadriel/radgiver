@@ -9,6 +9,7 @@ import com.google.protobuf.Value
 import com.google.protobuf.util.JsonFormat
 import com.softwaremill.quicklens.*
 import com.github.fermorg.radgiver.config.VertexAIConfig
+import com.github.fermorg.radgiver.model.http.PromptedPrediction
 import com.github.fermorg.radgiver.model.vertexai.{Instance, Parameters, Prediction, Request}
 import zio.json.*
 import zio.stream.{ZPipeline, ZSink, ZStream}
@@ -17,7 +18,7 @@ import zio.{RLayer, Scope, Task, ZIO, ZLayer}
 import scala.jdk.CollectionConverters.*
 
 trait VertexAIService {
-  def predictChatPrompt(message: String): Task[Option[String]]
+  def predictChatPrompt(message: String): Task[Option[PromptedPrediction]]
 
 }
 
@@ -29,7 +30,7 @@ object VertexAIService {
     ctx: Request,
   ) extends VertexAIService {
 
-    def predictChatPrompt(message: String): Task[Option[String]] = {
+    def predictChatPrompt(message: String): Task[Option[PromptedPrediction]] = {
       val modifiedCtx = ctx
         .modify(_.instances.each.messages.each.content)
         .setTo(message)
@@ -47,7 +48,9 @@ object VertexAIService {
         )
       response.flatMap {
         case r if r.getPredictionsCount >= 1 =>
-          LiveVertexAIService.extractPredictionContent(r.getPredictions(0))
+          LiveVertexAIService
+            .extractPredictionContent(r.getPredictions(0))
+            .map(_.map(PromptedPrediction.apply))
         case _ =>
           ZIO.succeed(None)
       }

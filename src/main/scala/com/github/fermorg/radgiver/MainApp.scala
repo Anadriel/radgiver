@@ -18,10 +18,10 @@ object MainApp extends ZIOAppDefault:
 
   def run: ZIO[Environment with ZIOAppArgs with Scope, Throwable, Any] =
     ZIO.scope.flatMap { scope =>
-      Server
-        .serve(HttpHandler.routes.withDefaultErrorResponse)
+      ZIO.debug("Starting server at 0.0.0.0:8080") *> Server
+        .serve(HttpHandler.routes)
         .provide(
-          Server.defaultWithPort(8080),
+          Server.defaultWith(_.binding("0.0.0.0", 8080)),
           VertexAIService.layer,
           ZLayer.fromZIO(ZIO.config(VertexAIConfig.config)),
           DeichmanApiService.layer,
