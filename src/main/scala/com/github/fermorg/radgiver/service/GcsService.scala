@@ -1,6 +1,7 @@
 package com.github.fermorg.radgiver.service
 
 import com.github.fermorg.radgiver.config.GcsConfig
+import com.google.cloud.storage.Storage.BlobTargetOption
 import com.google.cloud.storage.{BlobId, BlobInfo, Storage, StorageOptions}
 import zio.{RLayer, Scope, ZIO, ZLayer}
 
@@ -39,22 +40,12 @@ object GcsService {
       overwrite: Boolean,
     ): ZIO[Any, Throwable, Unit] = {
       val blobId = BlobId.of(config.bucketName, path)
-      if (overwrite)
-        createBlob(blobId, content)
-      else {
-        for {
-          blob <- ZIO.attemptBlocking(storage.get(blobId))
-          _ <-
-            if (Option(blob).isDefined)
-              ZIO.attemptBlocking {
-                val channel = blob.writer()
-                channel.write(ByteBuffer.wrap(blob.getContent() ++ content))
-                channel.close()
-              }
-            else
-              createBlob(blobId, content)
-        } yield ()
-      }
+      val blobInfo = BlobInfo.newBuilder(blobId).build
+      val options =
+        if (overwrite) List.empty
+        else List(BlobTargetOption.doesNotExist())
+
+      ZIO.attemptBlocking(storage.create(blobInfo, content, options*)).unit
     }
 
   }
