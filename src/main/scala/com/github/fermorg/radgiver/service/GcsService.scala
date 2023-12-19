@@ -29,8 +29,8 @@ object GcsService {
     }
 
     private def createBlob(blobId: BlobId, content: Array[Byte]): ZIO[Any, Throwable, Unit] = {
-      val blobInfo = BlobInfo.newBuilder(blobId).setContentType("text/plain").build
-      ZIO.attemptBlocking(storage.create(blobInfo, content)).map(_ => ())
+      val blobInfo = BlobInfo.newBuilder(blobId).build
+      ZIO.attemptBlocking(storage.create(blobInfo, content)).unit
     }
 
     override def writeBytes(
