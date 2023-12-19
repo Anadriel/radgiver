@@ -1,8 +1,8 @@
 package com.github.fermorg.radgiver
 
-import com.github.fermorg.radgiver.config.{DeichmanApiConfig, VertexAIConfig}
+import com.github.fermorg.radgiver.config.{DeichmanApiConfig, GcsConfig, VertexAIConfig}
 import com.github.fermorg.radgiver.http.HttpHandler
-import com.github.fermorg.radgiver.service.{DeichmanApiService, VertexAIService}
+import com.github.fermorg.radgiver.service.{DeichmanApiService, GcsService, VertexAIService}
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.http.{Client, Server}
 import zio.{ConfigProvider, Runtime, Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
@@ -26,6 +26,8 @@ object MainApp extends ZIOAppDefault:
           ZLayer.fromZIO(ZIO.config(VertexAIConfig.config)),
           DeichmanApiService.layer,
           ZLayer.fromZIO(ZIO.config(DeichmanApiConfig.config)),
+          GcsService.layer,
+          ZLayer.fromZIO(ZIO.config(GcsConfig.config)),
           Client.default,
           ZLayer.succeed(scope),
         )
