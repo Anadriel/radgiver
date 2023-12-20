@@ -2,34 +2,38 @@ package com.github.fermorg.radgiver.service
 
 import com.github.fermorg.radgiver.config.DeichmanApiConfig
 import com.github.fermorg.radgiver.model.deichman.{EventInfo, EventRef}
-import zio.http.{Client, Request, ZClient}
-import zio.{Chunk, RLayer, Task, ZIO, ZLayer}
+import zio.http.{Client, QueryParams, Request, ZClient}
+import zio.{Chunk, RLayer, Scope, Task, ZIO, ZLayer}
 import zio.stream.ZStream
 import zio.json.ast.Json
 import zio.json.*
 
 trait DeichmanApiService {
-  def eventRefs: ZIO[Any, Throwable, Chunk[EventRef]]
-  def getEvent(id: String): ZIO[Any, Throwable, EventInfo]
+  def eventRefs: Task[Chunk[EventRef]]
+  def getEvent(id: String): Task[EventInfo]
 }
 
 object DeichmanApiService {
 
   private class LiveDeichmanApiService(
     client: Client,
+    scope: Scope,
     config: DeichmanApiConfig,
   ) extends DeichmanApiService {
 
-    private def getTotalAndEventsAt(offset: Int): Task[Option[(Int, Chunk[EventRef])]] = {
-      val request =
-        Request.get(config.eventsEndpoint.withQueryParams("from" -> Chunk.single(offset.toString)))
+    private def getTotalAndEventsAt(
+      offset: Int
+    ): Task[Option[(Int, Chunk[EventRef])]] = {
+      val request = Request.get(
+        config.eventsEndpoint.addQueryParams(QueryParams("from" -> Chunk.single(offset.toString)))
+      )
       for {
-        res <- client.request(request)
+        res <- client.request(request).provide(ZLayer.succeed(scope))
         resBody <- res.body.asString
       } yield LiveDeichmanApiService.extractEventRefsAndTotal(resBody)
     }
 
-    def eventRefs: ZIO[Any, Throwable, Chunk[EventRef]] = getTotalAndEventsAt(0).flatMap {
+    def eventRefs: Task[Chunk[EventRef]] = getTotalAndEventsAt(0).flatMap {
       case None => ZIO.succeed(Chunk.empty)
       case Some((total, firstPage)) =>
         val pageSize = firstPage.length
@@ -54,10 +58,10 @@ object DeichmanApiService {
         }
     }
 
-    def getEvent(id: String): ZIO[Any, Throwable, EventInfo] = {
-      val url = config.eventsEndpoint.withPath(config.eventsEndpoint.path / id)
+    def getEvent(id: String): Task[EventInfo] = {
+      val url = config.eventsEndpoint.addPath(id)
       for {
-        res <- client.request(Request.get(url))
+        res <- client.request(Request.get(url)).provide(ZLayer.succeed(scope))
         resBody <- res.body.asString
         eventInfo <- ZIO
           .fromEither(resBody.fromJson[EventInfo])
@@ -81,11 +85,12 @@ object DeichmanApiService {
 
   }
 
-  val layer: RLayer[DeichmanApiConfig with Client, DeichmanApiService] = ZLayer {
+  val layer: RLayer[DeichmanApiConfig with Client with Scope, DeichmanApiService] = ZLayer {
     for {
       config <- ZIO.service[DeichmanApiConfig]
       client <- ZIO.service[Client]
-    } yield LiveDeichmanApiService(client, config)
+      scope <- ZIO.service[Scope]
+    } yield LiveDeichmanApiService(client, scope, config)
   }
 
 }

@@ -17,18 +17,16 @@ object MainApp extends ZIOAppDefault:
     )
 
   def run: ZIO[Environment with ZIOAppArgs with Scope, Throwable, Any] =
-    ZIO.scope.flatMap { scope =>
-      ZIO.debug("Starting server at 0.0.0.0:8080") *> Server
-        .serve(HttpHandler.routes)
-        .provide(
-          Server.defaultWith(_.binding("0.0.0.0", 8080)),
-          VertexAIService.layer,
-          ZLayer.fromZIO(ZIO.config(VertexAIConfig.config)),
-          DeichmanApiService.layer,
-          ZLayer.fromZIO(ZIO.config(DeichmanApiConfig.config)),
-          GcsService.layer,
-          ZLayer.fromZIO(ZIO.config(GcsConfig.config)),
-          Client.default,
-          ZLayer.succeed(scope),
-        )
-    }
+    ZIO.debug("Starting server at 0.0.0.0:8080") *> Server
+      .serve(HttpHandler.routes)
+      .provide(
+        Server.defaultWith(_.binding("0.0.0.0", 8080)),
+        VertexAIService.layer,
+        ZLayer.fromZIO(ZIO.config(VertexAIConfig.config)),
+        DeichmanApiService.layer,
+        ZLayer.fromZIO(ZIO.config(DeichmanApiConfig.config)),
+        GcsService.layer,
+        ZLayer.fromZIO(ZIO.config(GcsConfig.config)),
+        Client.default,
+        Scope.default,
+      )
