@@ -20,7 +20,7 @@ libraryDependencies ++= Seq(
   "com.softwaremill.quicklens" %% "quicklens" % "1.9.6",
   "com.github.jwt-scala" %% "jwt-zio-json" % "9.4.5",
   "com.google.cloud" % "google-cloud-storage" % "2.30.1",
-  "com.google.cloud" % "google-cloud-aiplatform" % "3.32.0",
+  "com.google.cloud" % "google-cloud-aiplatform" % "3.33.0",
 )
 
 // Docker
