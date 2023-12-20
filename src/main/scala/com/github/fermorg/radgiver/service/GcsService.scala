@@ -5,8 +5,6 @@ import com.google.cloud.storage.Storage.BlobTargetOption
 import com.google.cloud.storage.{BlobId, BlobInfo, Storage, StorageOptions}
 import zio.{RLayer, Scope, ZIO, ZLayer}
 
-import java.nio.ByteBuffer
-
 trait GcsService {
   def readBytes(path: String): ZIO[Any, Throwable, Option[Array[Byte]]]
 
@@ -27,11 +25,6 @@ object GcsService {
       ZIO.attemptBlocking(
         Option(storage.get(blobId)).map(_.getContent())
       )
-    }
-
-    private def createBlob(blobId: BlobId, content: Array[Byte]): ZIO[Any, Throwable, Unit] = {
-      val blobInfo = BlobInfo.newBuilder(blobId).build
-      ZIO.attemptBlocking(storage.create(blobInfo, content)).unit
     }
 
     override def writeBytes(
