@@ -154,7 +154,11 @@ const ghaCdServiceAccount = iam.createServiceAccount('gha-cd-sa');
 iam.bindServiceAccountToRoles(
     'gha-cd-sa-bindings',
     ghaCdServiceAccount,
-    new Set(['roles/artifactregistry.writer', 'roles/run.developer'])
+    new Set([
+        'roles/artifactregistry.writer',
+        'roles/run.admin',
+        'roles/iam.serviceAccountUser',
+    ])
 );
 
 // Allow Identities from the GitHub WIF pool to impersonate the CD service account

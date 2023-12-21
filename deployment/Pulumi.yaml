@@ -1,0 +1,6 @@
+name: radgiver-deployment
+runtime: nodejs
+description: GCP deployment definition for radgiver
+config:
+  gcp:project: radgiver
+  gcp:region: europe-west1
