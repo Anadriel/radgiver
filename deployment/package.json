@@ -5,13 +5,13 @@
         "node": ">20"
     },
     "devDependencies": {
-        "@types/node": "20.8.2",
+        "@types/node": "20.10.5",
         "gts": "^5.2.0",
-        "typescript": "~5.2.0"
+        "typescript": "~5.3.3"
     },
     "dependencies": {
-        "@pulumi/pulumi": "^3.0.0",
-        "@pulumi/gcp": "^7.0.0"
+        "@pulumi/pulumi": "^3.99.0",
+        "@pulumi/gcp": "^7.4.0"
     },
     "scripts": {
         "lint": "gts lint",
