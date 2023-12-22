@@ -4,7 +4,6 @@ import com.github.fermorg.radgiver.config.DeichmanApiConfig
 import com.github.fermorg.radgiver.model.deichman.{EventInfo, EventRef}
 import zio.http.{Client, QueryParams, Request, ZClient}
 import zio.{Chunk, RLayer, Scope, Task, ZIO, ZLayer}
-import zio.stream.ZStream
 import zio.json.ast.Json
 import zio.json.*
 
@@ -37,25 +36,26 @@ object DeichmanApiService {
       case None => ZIO.succeed(Chunk.empty)
       case Some((total, firstPage)) =>
         val pageSize = firstPage.length
-        val allChunks = ZStream
-          .unfold(0) { current =>
-            val next = current + pageSize
-            if (next >= total) None else Some((next, next))
-          }
-          .flatMapPar(config.parallelism) { offset =>
-            ZStream.fromZIO(getTotalAndEventsAt(offset)).mapConcatChunk {
-              case Some((_, chunk)) => chunk
-              case None             => Chunk.empty
-            }
-          }
-          .runCollect
-          .map(_ ++ firstPage)
-        allChunks.flatMap {
-          case chunks if chunks.length == total =>
-            ZIO.succeed(chunks)
-          case chunks =>
-            ZIO.fail(new Exception(s"Expected $total events, got ${chunks.length}"))
+        val offsets = List.unfold(0) { current =>
+          val next = current + pageSize
+          if (next >= total) None else Some((next, next))
         }
+
+        val restOfChunks = offsets.map(offset =>
+          getTotalAndEventsAt(offset).map {
+            case Some((_, chunk)) => chunk
+            case None             => Chunk.empty
+          }
+        )
+
+        ZIO
+          .reduceAllPar(ZIO.succeed(firstPage), restOfChunks)(_ ++ _)
+          .flatMap {
+            case chunks if chunks.length == total =>
+              ZIO.succeed(chunks)
+            case chunks =>
+              ZIO.fail(new Exception(s"Expected $total events, got ${chunks.length}"))
+          }
     }
 
     def getEvent(id: String): Task[EventInfo] = {
