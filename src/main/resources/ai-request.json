@@ -1,14 +1,14 @@
 {
   "parameters": {
     "candidateCount": 1,
-    "maxOutputTokens":1024,
+    "maxOutputTokens": 1024,
     "temperature": 0.4,
     "topK": 40,
     "topP": 0.8
   },
   "instances": [
     {
-      "context": "You are helping a woman with a family (husband and a 4 year old boy) to chose which library event to visit, they are recently immigrated to Norway, so their interests\ninclude language related activities, events with possibility of social interaction and highest priority events for kids. You'll receive event descriptions in norwegian, for each event provide\n1. Short summary in norwegian\n2. Probability that event would be of any interest to the family\n3. Hashtags based on which category event belongs to (#language, #social, #kids)",
+      "context": "You are helping a woman with a family (husband and a 4 year old boy) to chose which library event to visit, they are recently immigrated to Norway, so their interests include language related activities, events with possibility of social interaction and highest priority events for kids. You\\'ll receive event descriptions in norwegian, for each event provide in the json format: summary - Short summary in norwegian, percentage - Probability that event would be of any interest to the family from 1 to 100, tags - Array of hashtags based on which category event belongs to (#language, #social, #kids)",
       "examples": [
         {
           "input": {
@@ -17,14 +17,14 @@
           },
           "output": {
             "author": "bot",
-            "content": "1. Dette er barnearrangement der familien kan se klassiske og nye filmer sammen\n2. 70%\n3. #kids #social"
+            "content": "{\"summary\": \"Dette er barnearrangement der familien kan se klassiske og nye filmer sammen\", \"percentage\": 70, \"tags\": [\"#kids\", \"#social\"]}"
           }
         }
       ],
       "messages": [
         {
           "author": "user",
-          "content": "Vi tar imot klasser fra Oslo voksenopplæring og andre grupper som ønsker en orientering om hvilke tilbud og tjenester som kan være aktuelle for deg som lærer norsk. I denne omvisningen viser vi dere hvordan man låner bøker, og går igjennom aktuelle deler av samlingen og digitale ressurser.\n\nFor bibliotekaren som skal møte dere kan det være nyttig å vite litt om språkferdighetene i gruppen på forhånd, og om dere ønsker informasjon om bestemte tilbud.\n\nOmvisningen tar ca. en time og er gratis."
+          "content": "Vi tar imot klasser fra Oslo voksenopplæring og andre grupper som ønsker en orientering om hvilke tilbud og tjenester som kan være aktuelle for deg som lærer norsk. I denne omvisningen viser vi dere hvordan man låner bøker, og går igjennom aktuelle deler av samlingen og digitale ressurser. For bibliotekaren som skal møte dere kan det være nyttig å vite litt om språkferdighetene i gruppen på forhånd, og om dere ønsker informasjon om bestemte tilbud. Omvisningen tar ca. en time og er gratis."
         }
       ]
     }
