@@ -12,7 +12,6 @@ import com.github.fermorg.radgiver.config.VertexAIConfig
 import com.github.fermorg.radgiver.model.http.PromptedPrediction
 import com.github.fermorg.radgiver.model.vertexai.{Instance, Parameters, Prediction, Request}
 import zio.json.*
-import zio.json.ast.Json
 import zio.stream.{ZPipeline, ZSink, ZStream}
 import zio.{RLayer, Scope, Task, ZIO, ZLayer}
 
@@ -51,7 +50,6 @@ object VertexAIService {
         case r if r.getPredictionsCount >= 1 =>
           LiveVertexAIService
             .extractPredictionContent(r.getPredictions(0))
-            .map(_.map(PromptedPrediction.apply))
         case _ =>
           ZIO.succeed(None)
       }
@@ -75,14 +73,14 @@ object VertexAIService {
       parser.merge(parameters.toJson, parameterValueBuilder)
       parameterValueBuilder.build
 
-    private def extractPredictionContent(v: Value): Task[Option[Json.Obj]] = ZIO
+    private def extractPredictionContent(v: Value): Task[Option[PromptedPrediction]] = ZIO
       .fromEither {
         printer
           .print(v)
           .fromJson[Prediction]
           .map(
             _.candidates.headOption
-              .flatMap(_.content.trim.fromJson[Json.Obj].toOption)
+              .flatMap(_.content.trim.fromJson[PromptedPrediction].toOption)
           )
       }
       .mapError(err => new Exception(err))
