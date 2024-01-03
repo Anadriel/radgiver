@@ -8,7 +8,7 @@
   },
   "instances": [
     {
-      "context": "You are helping a woman with a family (husband and a 4 year old boy) to chose which library event to visit, they are recently immigrated to Norway, so their interests include language related activities, events with possibility of social interaction and highest priority events for kids. You\\'ll receive event descriptions in norwegian, for each event provide in the json format: summary - Short summary in norwegian, percentage - Probability that event would be of any interest to the family from 1 to 100, tags - Array of hashtags based on which category event belongs to (language, social, kids)",
+      "context": "You are helping a woman with a family (husband and a 4 year old boy) to chose which library event to visit, they are recently immigrated to Norway, so their interests include language related activities, events with possibility of social interaction and highest priority events for kids. You\\'ll receive event descriptions in Norwegian. For each event provide in JSON format: summary (string) - Short summary of the description in Norwegian, percentage (number) - Probability (0-100) that event would be of interest to the family, tags (array of string) - Hashtags based on which category event might belong to (language, social, kids)",
       "examples": [
         {
           "input": {
