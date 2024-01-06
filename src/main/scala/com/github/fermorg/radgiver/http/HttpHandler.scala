@@ -20,6 +20,15 @@ object HttpHandler:
     )
   }
 
+  private val radApp = Routes(
+    Method.GET / "trigger" -> handler {
+      ZIO
+        .service[RadService]
+        .flatMap(_.getNewRader)
+        .map(rader => Response.json(rader.toJson))
+    }
+  )
+
   private val predictApp = Routes(
     Method.POST / "predict" -> handler { (request: Request) =>
       val jsonBody = request.body.asString.map(_.fromJson[Json.Obj])
@@ -98,8 +107,8 @@ object HttpHandler:
     },
   )
 
-  val routes: HttpApp[GcsService with DeichmanApiService with VertexAIService] =
-    (predictApp ++ eventsApp ++ blobsApp)
+  val routes: HttpApp[RadService with GcsService with DeichmanApiService with VertexAIService] =
+    (radApp ++ predictApp ++ eventsApp ++ blobsApp)
       .handleError(e =>
         Response.json(ErrorResponse.fromError(e).toJson).status(Status.InternalServerError)
       )
