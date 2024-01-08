@@ -14,13 +14,13 @@ libraryDependencies ++= Seq(
   "dev.zio" %% "zio-streams" % "2.0.21",
   "dev.zio" %% "zio-json" % "0.6.2",
   "dev.zio" %% "zio-http" % "3.0.0-RC4",
-  "dev.zio" %% "zio-config" % "4.0.0",
-  "dev.zio" %% "zio-config-typesafe" % "4.0.0",
-  "dev.zio" %% "zio-config-magnolia" % "4.0.0",
-  "com.softwaremill.quicklens" %% "quicklens" % "1.9.6",
-  "com.github.jwt-scala" %% "jwt-zio-json" % "9.4.5",
-  "com.google.cloud" % "google-cloud-storage" % "2.30.1",
-  "com.google.cloud" % "google-cloud-aiplatform" % "3.33.0",
+  "dev.zio" %% "zio-config" % "4.0.1",
+  "dev.zio" %% "zio-config-typesafe" % "4.0.1",
+  "dev.zio" %% "zio-config-magnolia" % "4.0.1",
+  "com.softwaremill.quicklens" %% "quicklens" % "1.9.7",
+  "com.github.jwt-scala" %% "jwt-zio-json" % "10.0.0",
+  "com.google.cloud" % "google-cloud-storage" % "2.34.0",
+  "com.google.cloud" % "google-cloud-aiplatform" % "3.36.0",
 )
 
 // Docker
