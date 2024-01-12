@@ -21,10 +21,12 @@ object HttpHandler:
   }
 
   private val radApp = Routes(
-    Method.GET / "trigger" -> handler {
+    Method.GET / "trigger" -> handler { (request: Request) =>
+      val horizon = request.url.queryParams.getAs[Int]("horizon").toOption
+      val batch = request.url.queryParams.getAs[Int]("batch").toOption
       ZIO
         .service[RadService]
-        .flatMap(_.getNewRader)
+        .flatMap(_.getNewRader(horizon, batch))
         .map(rader => Response.json(rader.toJson))
     }
   )

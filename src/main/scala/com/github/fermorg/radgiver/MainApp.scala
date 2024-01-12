@@ -3,6 +3,7 @@ package com.github.fermorg.radgiver
 import com.github.fermorg.radgiver.config.{
   DeichmanApiConfig,
   GcsConfig,
+  RadConfig,
   StateConfig,
   VertexAIConfig,
 }
@@ -47,5 +48,6 @@ object MainApp extends ZIOAppDefault:
       StateService.layer,
       ZLayer.fromZIO(ZIO.config(StateConfig.config)),
       RadService.layer,
+      ZLayer.fromZIO(ZIO.config(RadConfig.config)),
       Scope.default,
     )
