@@ -1,6 +1,6 @@
 package com.github.fermorg.radgiver.service
 
-import com.github.fermorg.radgiver.config.RadConfig
+import com.github.fermorg.radgiver.config.PredictorConfig
 import com.github.fermorg.radgiver.model.deichman.EventRef
 import com.github.fermorg.radgiver.model.http.PromptedPrediction
 
@@ -8,23 +8,23 @@ import java.time.ZonedDateTime
 import zio.{Chunk, Duration, RLayer, ZIO, ZLayer}
 import zio.json.*
 
-trait RadService {
+trait PredictorService {
 
-  def getNewRader(
+  def getNewPredictions(
     horizonDays: Option[Int],
     batchSize: Option[Int],
   ): ZIO[Any, Throwable, Set[PromptedPrediction]]
 
 }
 
-object RadService {
+object PredictorService {
 
-  private class LiveRadService(
+  private class LivePredictorService(
     deichman: DeichmanApiService,
     state: StateService,
     vertexAI: VertexAIService,
-    config: RadConfig,
-  ) extends RadService {
+    config: PredictorConfig,
+  ) extends PredictorService {
 
     private def getPredictionFor(id: String): ZIO[Any, Throwable, Option[PromptedPrediction]] = {
       val sleepTimeSeconds = Math.ceil(60d / config.vertexAIQuota).toInt
@@ -57,7 +57,7 @@ object RadService {
       if (batchSize < eventsInHorizonAmount) eventsInHorizon.take(batchSize) else eventsInHorizon
     }
 
-    def getNewRader(
+    def getNewPredictions(
       horizonDays: Option[Int],
       batchSize: Option[Int],
     ): ZIO[Any, Throwable, Set[PromptedPrediction]] = {
@@ -87,15 +87,17 @@ object RadService {
 
   }
 
-  val layer
-    : RLayer[DeichmanApiService with StateService with VertexAIService with RadConfig, RadService] =
+  val layer: RLayer[
+    DeichmanApiService with StateService with VertexAIService with PredictorConfig,
+    PredictorService,
+  ] =
     ZLayer {
       for {
         deichman <- ZIO.service[DeichmanApiService]
         state <- ZIO.service[StateService]
         vertexAI <- ZIO.service[VertexAIService]
-        config <- ZIO.service[RadConfig]
-      } yield LiveRadService(deichman, state, vertexAI, config)
+        config <- ZIO.service[PredictorConfig]
+      } yield LivePredictorService(deichman, state, vertexAI, config)
     }
 
 }

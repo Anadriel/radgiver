@@ -20,14 +20,14 @@ object HttpHandler:
     )
   }
 
-  private val radApp = Routes(
+  private val adviserApp = Routes(
     Method.GET / "trigger" -> handler { (request: Request) =>
       val horizon = request.url.queryParams.getAs[Int]("horizon").toOption
       val batch = request.url.queryParams.getAs[Int]("batch").toOption
       ZIO
-        .service[RadService]
-        .flatMap(_.getNewRader(horizon, batch))
-        .map(rader => Response.json(rader.toJson))
+        .service[PredictorService]
+        .flatMap(_.getNewPredictions(horizon, batch))
+        .map(advises => Response.json(advises.toJson))
     }
   )
 
@@ -109,8 +109,9 @@ object HttpHandler:
     },
   )
 
-  val routes: HttpApp[RadService with GcsService with DeichmanApiService with VertexAIService] =
-    (radApp ++ predictApp ++ eventsApp ++ blobsApp)
+  val routes
+    : HttpApp[PredictorService with GcsService with DeichmanApiService with VertexAIService] =
+    (adviserApp ++ predictApp ++ eventsApp ++ blobsApp)
       .handleError(e =>
         Response.json(ErrorResponse.fromError(e).toJson).status(Status.InternalServerError)
       )
