@@ -35,8 +35,7 @@ object PredictorService {
         _ <- ZIO.logInfo(s"Event $id was proceed with the result: ${prediction.map(_.toJson)}")
       } yield prediction
       predictionRetrieving.catchAll { e =>
-        ZIO.logErrorCause(zio.Cause.fail(e))
-        ZIO.succeed(None)
+        ZIO.logErrorCause(zio.Cause.fail(e)).map(_ => None)
       }
     }
 
