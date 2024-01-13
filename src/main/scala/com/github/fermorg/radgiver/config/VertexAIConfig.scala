@@ -28,4 +28,5 @@ object VertexAIConfig {
 
   val layer: Layer[Config.Error, VertexAIConfig] =
     ZLayer.fromZIO(ZIO.config(config))
+
 }
