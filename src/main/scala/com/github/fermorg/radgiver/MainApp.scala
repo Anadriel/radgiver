@@ -30,24 +30,35 @@ object MainApp extends ZIOAppDefault:
         .orElse(ConfigProvider.defaultProvider)
     )
 
+  private val configuredGcs =
+    GcsConfig.layer >>> GcsService.layer
+
+  private val configuredDeichmanApi =
+    (Client.default ++ DeichmanApiConfig.layer) >>> DeichmanApiService.layer
+
+  private val configuredVertexAI =
+    VertexAIConfig.layer >>> VertexAIService.layer
+
+  private val configuredState =
+    (configuredGcs ++ StateConfig.layer) >>> StateService.layer
+
+  private val configuredPredictor = (
+    configuredDeichmanApi
+      ++ configuredState
+      ++ configuredVertexAI
+      ++ PredictorConfig.layer
+  ) >>> PredictorService.layer
+
   def run: ZIO[Environment with ZIOAppArgs with Scope, Throwable, Any] = ZIO
     .service[Server]
     .flatMap { server =>
       ZIO.debug(s"Server live at ${server.port}") *> ZIO.never
     }
     .provide(
-      FixedServer.withApp(HttpHandler.routes),
-      ZLayer.succeed(Config.default.port(8080)),
-      VertexAIService.layer,
-      ZLayer.fromZIO(ZIO.config(VertexAIConfig.config)),
-      DeichmanApiService.layer,
-      ZLayer.fromZIO(ZIO.config(DeichmanApiConfig.config)),
-      GcsService.layer,
-      ZLayer.fromZIO(ZIO.config(GcsConfig.config)),
-      Client.default,
-      StateService.layer,
-      ZLayer.fromZIO(ZIO.config(StateConfig.config)),
-      PredictorService.layer,
-      ZLayer.fromZIO(ZIO.config(PredictorConfig.config)),
+      ZLayer.succeed(Config.default.port(8080)) >>> FixedServer.withApp(HttpHandler.routes),
       Scope.default,
+      configuredGcs,
+      configuredDeichmanApi,
+      configuredVertexAI,
+      configuredPredictor,
     )

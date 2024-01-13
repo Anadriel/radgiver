@@ -1,6 +1,6 @@
 package com.github.fermorg.radgiver.config
 
-import zio.Config
+import zio.{Config, Layer, ZIO, ZLayer}
 import zio.config.magnolia.{deriveConfig, DeriveConfig}
 import zio.http.URL
 
@@ -16,5 +16,8 @@ object DeichmanApiConfig {
 
   val config: Config[DeichmanApiConfig] =
     deriveConfig[DeichmanApiConfig].nested("deichman-api")
+
+  val layer: Layer[Config.Error, DeichmanApiConfig] =
+    ZLayer.fromZIO(ZIO.config(config))
 
 }

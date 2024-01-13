@@ -1,6 +1,6 @@
 package com.github.fermorg.radgiver.config
 
-import zio.Config
+import zio.{Config, Layer, ZIO, ZLayer}
 import zio.config.magnolia.deriveConfig
 
 case class VertexAIConfig(
@@ -26,4 +26,6 @@ object VertexAIConfig {
       config.model.nonEmpty && config.promptRef.nonEmpty
     }
 
+  val layer: Layer[Config.Error, VertexAIConfig] =
+    ZLayer.fromZIO(ZIO.config(config))
 }
