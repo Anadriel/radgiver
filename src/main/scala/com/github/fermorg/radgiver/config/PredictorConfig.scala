@@ -11,6 +11,7 @@ case class PredictorConfig(
   defaultBatchSize: Int,
   vertexAIQuota: Int,
   timeZone: ZoneId,
+  minimalEventMatchProbability: Int,
 )
 
 object PredictorConfig {

@@ -43,17 +43,13 @@ object PredictorService {
       events: Chunk[EventRef],
       processedEventsIds: Set[String],
       horizonDays: Int,
-      batchSize: Int,
     ): Chunk[String] = {
       val now = ZonedDateTime.now(config.timeZone)
       val horizonsEnd = now.plusDays(horizonDays)
-      val eventsInHorizon = events
+      events
         .filter(e => !processedEventsIds.contains(e.id) && e.startTime.isBefore(horizonsEnd))
         .sortBy(_.startTime)
         .map(_.id)
-      val eventsInHorizonAmount = eventsInHorizon.size
-      println(s"Events inside in horizon: $eventsInHorizonAmount")
-      if (batchSize < eventsInHorizonAmount) eventsInHorizon.take(batchSize) else eventsInHorizon
     }
 
     def getNewPredictions(
@@ -70,19 +66,41 @@ object PredictorService {
           fetchedEvents,
           processedEventsIds,
           realHorizonDays,
-          realBatchSize,
         )
         newStateBase = fetchedEvents.map(_.id).toSet.intersect(processedEventsIds)
-        _ <- ZIO.logInfo(s"Need to get predictions for ${eventsForProceeding.size} events")
-        stateAndPredictions <- ZIO.foldLeft(eventsForProceeding)(
-          (newStateBase, Set.empty[PromptedPrediction])
-        ) { case ((state, result), eventId) =>
-          getPredictionFor(eventId)
-            .map(_.map(p => (state + eventId, result + p)).getOrElse((state, result)))
-        }
+        _ <- ZIO.logInfo(s"Events inside in horizon: ${eventsForProceeding.size}")
+        stateAndPredictions <- extractPredictions(
+          eventsForProceeding,
+          newStateBase,
+          Set.empty,
+          0,
+          realBatchSize,
+        )
         _ <- state.setState(stateAndPredictions._1)
       } yield stateAndPredictions._2
     }
+
+    private def extractPredictions(
+      eventIds: Chunk[String],
+      state: Set[String],
+      predictions: Set[PromptedPrediction],
+      total: Int,
+      batchSize: Int,
+    ): ZIO[Any, Throwable, (Set[String], Set[PromptedPrediction])] =
+      if (eventIds.isEmpty || total >= batchSize)
+        ZIO.succeed(state, predictions)
+      else {
+        val eventId = eventIds.head
+        getPredictionFor(eventId).flatMap {
+          case Some(p) =>
+            if (p.percentage >= config.minimalEventMatchProbability)
+              extractPredictions(eventIds.tail, state + eventId, predictions + p, total + 1, batchSize)
+            else
+              extractPredictions(eventIds.tail, state + eventId, predictions, total, batchSize)
+          case None =>
+            extractPredictions(eventIds.tail, state, predictions, total, batchSize)
+        }
+      }
 
   }
 
