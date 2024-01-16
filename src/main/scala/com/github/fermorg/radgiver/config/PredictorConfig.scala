@@ -9,7 +9,6 @@ import scala.util.{Failure, Success, Try}
 case class PredictorConfig(
   defaultPlanningHorizonDays: Int,
   defaultBatchSize: Int,
-  vertexAIQuota: Int,
   timeZone: ZoneId,
   minimalEventMatchProbability: Int,
 )

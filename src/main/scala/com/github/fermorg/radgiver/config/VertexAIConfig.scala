@@ -10,6 +10,7 @@ case class VertexAIConfig(
   publisher: String,
   model: String,
   promptRef: String,
+  quota: QuotaConfig,
 ) {
   def regionalEndpoint: String = s"$location-$apiEndpoint"
 }
