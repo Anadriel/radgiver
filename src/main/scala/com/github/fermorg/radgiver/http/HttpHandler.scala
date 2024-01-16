@@ -1,7 +1,7 @@
 package com.github.fermorg.radgiver.http
 
 import com.github.fermorg.radgiver.model.http.{BlobContent, ErrorResponse, WriteBlob}
-import zio.{http, ZIO}
+import zio.{http, Scope, ZIO}
 import zio.http.*
 import zio.json.ast.Json
 import zio.json.*
@@ -109,8 +109,9 @@ object HttpHandler:
     },
   )
 
-  val routes
-    : HttpApp[PredictorService with GcsService with DeichmanApiService with VertexAIService] =
+  val routes: HttpApp[
+    PredictorService with GcsService with DeichmanApiService with VertexAIService with Scope
+  ] =
     (adviserApp ++ predictApp ++ eventsApp ++ blobsApp)
       .handleError(e =>
         Response.json(ErrorResponse.fromError(e).toJson).status(Status.InternalServerError)
