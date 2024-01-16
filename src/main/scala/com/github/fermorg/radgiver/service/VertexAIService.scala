@@ -11,6 +11,7 @@ import com.softwaremill.quicklens.*
 import com.github.fermorg.radgiver.config.VertexAIConfig
 import com.github.fermorg.radgiver.model.http.PromptedPrediction
 import com.github.fermorg.radgiver.model.vertexai.{Instance, Parameters, Prediction, Request}
+import nl.vroste.rezilience.RateLimiter
 import zio.json.*
 import zio.stream.{ZPipeline, ZSink, ZStream}
 import zio.{RLayer, Scope, Task, ZIO, ZLayer}
@@ -28,6 +29,7 @@ object VertexAIService {
     client: PredictionServiceClient,
     endpoint: EndpointName,
     ctx: Request,
+    rateLimiter: RateLimiter,
   ) extends VertexAIService {
 
     def predictChatPrompt(message: String): Task[Option[PromptedPrediction]] = {
@@ -35,17 +37,19 @@ object VertexAIService {
         .modify(_.instances.each.messages.each.content)
         .setTo(message)
 
-      val response = ZIO
-        .attemptBlocking(
-          client
-            .predict(
-              endpoint,
-              modifiedCtx.instances
-                .map(LiveVertexAIService.mkInstanceValue)
-                .asJava,
-              LiveVertexAIService.mkParametersValue(modifiedCtx.parameters),
-            )
-        )
+      val response = rateLimiter(
+        ZIO
+          .attemptBlocking(
+            client
+              .predict(
+                endpoint,
+                modifiedCtx.instances
+                  .map(LiveVertexAIService.mkInstanceValue)
+                  .asJava,
+                LiveVertexAIService.mkParametersValue(modifiedCtx.parameters),
+              )
+          )
+      )
       response.flatMap {
         case r if r.getPredictionsCount >= 1 =>
           LiveVertexAIService
@@ -109,6 +113,7 @@ object VertexAIService {
             .mapError(err => new Exception(err))
         }
 
+      rateLimiter <- RateLimiter.make(config.quota.count, config.quota.duration)
     } yield new LiveVertexAIService(
       client,
       EndpointName.ofProjectLocationPublisherModelName(
@@ -118,6 +123,7 @@ object VertexAIService {
         config.model,
       ),
       ctx,
+      rateLimiter,
     )
   }
 
