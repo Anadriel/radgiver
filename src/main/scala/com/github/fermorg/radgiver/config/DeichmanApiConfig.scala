@@ -4,7 +4,10 @@ import zio.{Config, Layer, ZIO, ZLayer}
 import zio.config.magnolia.{deriveConfig, DeriveConfig}
 import zio.http.URL
 
-case class DeichmanApiConfig(eventsEndpoint: URL, parallelism: Int)
+import java.time.ZoneId
+import scala.util.{Failure, Success, Try}
+
+case class DeichmanApiConfig(eventsEndpoint: URL, parallelism: Int, timeZone: ZoneId)
 
 object DeichmanApiConfig {
 
@@ -13,6 +16,12 @@ object DeichmanApiConfig {
       case Left(value)  => Left(Config.Error.InvalidData(message = value.getMessage))
       case Right(value) => Right(value)
   )
+
+  given deriveTimeZone: DeriveConfig[ZoneId] = DeriveConfig[String].mapOrFail { s =>
+    Try(ZoneId.of(s)) match
+      case Failure(value) => Left(Config.Error.InvalidData(message = value.getMessage))
+      case Success(value) => Right(value)
+  }
 
   val config: Config[DeichmanApiConfig] =
     deriveConfig[DeichmanApiConfig].nested("deichman-api")

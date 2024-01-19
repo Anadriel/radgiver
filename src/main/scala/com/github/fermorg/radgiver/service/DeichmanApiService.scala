@@ -2,17 +2,39 @@ package com.github.fermorg.radgiver.service
 
 import com.github.fermorg.radgiver.config.DeichmanApiConfig
 import com.github.fermorg.radgiver.model.deichman.{EventInfo, EventRef}
-import zio.http.{Client, QueryParams, Request, ZClient}
+import com.github.fermorg.radgiver.service.DeichmanApiService.TimeWindow
+import zio.http.{Client, QueryParams, Request, URL, ZClient}
 import zio.{Chunk, RLayer, Scope, Task, ZIO, ZLayer}
 import zio.json.ast.Json
 import zio.json.*
 
+import java.time.temporal.ChronoUnit
+import java.time.LocalDate
+
 trait DeichmanApiService {
-  def eventRefs: Task[Chunk[EventRef]]
+
+  def eventRefs(
+    timeWindow: Option[TimeWindow],
+    limit: Option[Int],
+  ): Task[Chunk[EventRef]]
+
   def getEvent(id: String): Task[EventInfo]
 }
 
 object DeichmanApiService {
+
+  case class TimeWindow(startDate: LocalDate, endDate: LocalDate)
+
+  object TimeWindow {
+
+    def nextN(days: Int): Option[TimeWindow] = if (days <= 0) {
+      None
+    } else {
+      val today = LocalDate.now()
+      Some(TimeWindow(today, today.plusDays(days - 1)))
+    }
+
+  }
 
   private class LiveDeichmanApiService(
     client: Client,
@@ -20,42 +42,52 @@ object DeichmanApiService {
     config: DeichmanApiConfig,
   ) extends DeichmanApiService {
 
-    private def getTotalAndEventsAt(
-      offset: Int
-    ): Task[Option[(Int, Chunk[EventRef])]] = {
-      val request = Request.get(
-        config.eventsEndpoint.addQueryParams(QueryParams("from" -> Chunk.single(offset.toString)))
-      )
-      for {
-        res <- client.request(request).provide(ZLayer.succeed(scope))
-        resBody <- res.body.asString
-      } yield LiveDeichmanApiService.extractEventRefsAndTotal(resBody)
-    }
+    def eventRefs(
+      timeWindow: Option[TimeWindow],
+      limit: Option[Int],
+    ): Task[Chunk[EventRef]] = {
+      val base = LiveDeichmanApiService.baseUrl(config, timeWindow)
 
-    def eventRefs: Task[Chunk[EventRef]] = getTotalAndEventsAt(0).flatMap {
-      case None => ZIO.succeed(Chunk.empty)
-      case Some((total, firstPage)) =>
-        val pageSize = firstPage.length
-        val offsets = List.unfold(0) { current =>
-          val next = current + pageSize
-          if (next >= total) None else Some((next, next))
-        }
+      def getTotalAndEventsAt(offset: Int): Task[Option[(Int, Chunk[EventRef])]] = {
+        val request =
+          Request.get(base.addQueryParams(QueryParams("from" -> Chunk.single(offset.toString))))
+        for {
+          res <- client.request(request).provide(ZLayer.succeed(scope))
+          resBody <- res.body.asString
+        } yield LiveDeichmanApiService.extractEventRefsAndTotal(resBody)
+      }
 
-        val restOfChunks = offsets.map(offset =>
-          getTotalAndEventsAt(offset).map {
-            case Some((_, chunk)) => chunk
-            case None             => Chunk.empty
+      getTotalAndEventsAt(0).flatMap {
+        case None => ZIO.succeed(Chunk.empty)
+        case Some((total, firstPage)) =>
+          val pageSize = firstPage.length
+          val offsets = List.unfold(0) { current =>
+            val next = current + pageSize
+            if (next >= total || limit.exists(_ <= next)) None else Some((next, next))
           }
-        )
 
-        ZIO
-          .reduceAllPar(ZIO.succeed(firstPage), restOfChunks)(_ ++ _)
-          .flatMap {
-            case chunks if chunks.length == total =>
-              ZIO.succeed(chunks)
-            case chunks =>
-              ZIO.fail(new Exception(s"Expected $total events, got ${chunks.length}"))
+          val restOfChunks = offsets.map(offset =>
+            getTotalAndEventsAt(offset).map {
+              case Some((_, chunk)) => chunk
+              case None             => Chunk.empty
+            }
+          )
+
+          val expected = limit match {
+            case Some(l) if l < total =>
+              (l.toDouble / pageSize).ceil.toInt * pageSize
+            case _ => total
           }
+
+          ZIO
+            .reduceAllPar(ZIO.succeed(firstPage), restOfChunks)(_ ++ _)
+            .flatMap {
+              case chunk if chunk.length == expected =>
+                ZIO.succeed(limit.fold(chunk)(chunk.take))
+              case chunk =>
+                ZIO.fail(new Exception(s"Expected $expected events, got ${chunk.length}"))
+            }
+      }
     }
 
     def getEvent(id: String): Task[EventInfo] = {
@@ -72,6 +104,30 @@ object DeichmanApiService {
   }
 
   private object LiveDeichmanApiService {
+
+    private def baseUrl(config: DeichmanApiConfig, timeWindow: Option[TimeWindow]): URL =
+      timeWindow match {
+        case Some(timeWindow) =>
+          config.eventsEndpoint.addQueryParams(
+            QueryParams(
+              "fromDate" -> Chunk.single(
+                timeWindow.startDate
+                  .atStartOfDay(config.timeZone)
+                  .toInstant
+                  .truncatedTo(ChronoUnit.MILLIS)
+                  .toString
+              ),
+              "toDate" -> Chunk.single(
+                timeWindow.endDate
+                  .atStartOfDay(config.timeZone)
+                  .toInstant
+                  .truncatedTo(ChronoUnit.MILLIS)
+                  .toString
+              ),
+            )
+          )
+        case None => config.eventsEndpoint
+      }
 
     private def extractEventRefsAndTotal(data: String): Option[(Int, Chunk[EventRef])] =
       for

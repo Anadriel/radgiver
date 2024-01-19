@@ -6,6 +6,7 @@ import zio.http.*
 import zio.json.ast.Json
 import zio.json.*
 import com.github.fermorg.radgiver.service.*
+import com.github.fermorg.radgiver.service.DeichmanApiService.TimeWindow
 
 import java.nio.charset.StandardCharsets.UTF_8
 
@@ -61,10 +62,13 @@ object HttpHandler:
   )
 
   private val eventsApp = Routes(
-    Method.GET / "events" -> handler {
+    Method.GET / "events" -> handler { (request: Request) =>
+      val limit = request.url.queryParams.getAs[Int]("limit").toOption
+      val horizon = request.url.queryParams.getAs[Int]("horizon").toOption
+
       ZIO
         .service[DeichmanApiService]
-        .flatMap(_.eventRefs)
+        .flatMap(_.eventRefs(timeWindow = horizon.flatMap(TimeWindow.nextN), limit = limit))
         .map { events =>
           Response(
             status = Status.Ok,
