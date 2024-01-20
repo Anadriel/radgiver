@@ -17,11 +17,16 @@ libraryDependencies ++= Seq(
   "dev.zio" %% "zio-config" % "4.0.1",
   "dev.zio" %% "zio-config-typesafe" % "4.0.1",
   "dev.zio" %% "zio-config-magnolia" % "4.0.1",
+  "dev.zio" %% "zio-logging-slf4j2" % "2.2.2",
   "com.softwaremill.quicklens" %% "quicklens" % "1.9.7",
   "com.github.jwt-scala" %% "jwt-zio-json" % "10.0.0",
   "nl.vroste" %% "rezilience" % "0.9.4",
   "com.google.cloud" % "google-cloud-storage" % "2.34.0",
   "com.google.cloud" % "google-cloud-aiplatform" % "3.36.0",
+  "org.slf4j" % "log4j-over-slf4j" % "2.0.12",
+  "org.slf4j" % "jcl-over-slf4j" % "2.0.12",
+  "org.slf4j" % "jul-to-slf4j" % "2.0.12",
+  "ch.qos.logback" % "logback-classic" % "1.5.0",
 )
 
 // Docker

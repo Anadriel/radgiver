@@ -69,7 +69,7 @@ object PredictorService {
           .flatMap(event => vertexAI.predictChatPrompt(event.description))
           .tap(prediction =>
             ZIO.logInfo(
-              s"Event $eventId processed with the result: ${prediction.map(_.toJson)}"
+              s"Event $eventId processed with the result: ${prediction.fold("No prediction")(_.toJson)}"
             )
           )
       }

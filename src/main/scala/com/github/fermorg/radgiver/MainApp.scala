@@ -19,16 +19,32 @@ import zio.config.typesafe.TypesafeConfigProvider
 import zio.http.Server.Config
 import zio.http.netty.server.FixedServer
 import zio.http.{Client, Server}
+import zio.logging.backend.SLF4J
 import zio.{ConfigProvider, Runtime, Scope, ZIO, ZIOAppArgs, ZIOAppDefault, ZLayer}
 
 object MainApp extends ZIOAppDefault:
+
+  // Direct java-util-logging logs to SLF4J
+  private val julToSlf4j = ZLayer.fromZIO(
+    ZIO.attempt(
+      System.setProperty(
+        "java.util.logging.config.file",
+        getClass.getClassLoader.getResource("jul-logging.properties").getPath,
+      )
+    )
+  )
+
+  // Direct zio logs to SLF4J
+  private val zioLogToSlf4j = Runtime.removeDefaultLoggers >>> SLF4J.slf4j
+
+  private val loggingBootstrap = julToSlf4j ++ zioLogToSlf4j
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.setConfigProvider(
       TypesafeConfigProvider
         .fromResourcePath()
         .orElse(ConfigProvider.defaultProvider)
-    )
+    ) ++ loggingBootstrap
 
   private val configuredGcs =
     GcsConfig.layer >>> GcsService.layer
@@ -52,7 +68,7 @@ object MainApp extends ZIOAppDefault:
   def run: ZIO[Environment with ZIOAppArgs with Scope, Throwable, Any] = ZIO
     .service[Server]
     .flatMap { server =>
-      ZIO.debug(s"Server live at ${server.port}") *> ZIO.never
+      ZIO.logInfo(s"Server live at ${server.port}") *> ZIO.never
     }
     .provide(
       ZLayer.succeed(Config.default.port(8080)) >>> FixedServer.withApp(HttpHandler.routes),
