@@ -1,10 +1,9 @@
 package com.github.fermorg.radgiver.service
 
 import com.github.fermorg.radgiver.config.PredictorConfig
-import com.github.fermorg.radgiver.model.deichman.EventRef
 import com.github.fermorg.radgiver.model.http.PromptedPrediction
+import com.github.fermorg.radgiver.service.DeichmanApiService.TimeWindow
 
-import java.time.ZonedDateTime
 import zio.{Chunk, RLayer, Scope, ZIO, ZLayer}
 import zio.json.*
 
@@ -26,19 +25,6 @@ object PredictorService {
     config: PredictorConfig,
   ) extends PredictorService {
 
-    private def getEventsIdsForHorizon(
-      events: Chunk[EventRef],
-      processedEventsIds: Set[String],
-      horizonDays: Int,
-    ): Chunk[String] = {
-      val now = ZonedDateTime.now(config.timeZone)
-      val horizonsEnd = now.plusDays(horizonDays)
-      events
-        .filter(e => !processedEventsIds.contains(e.id) && e.startTime.isBefore(horizonsEnd))
-        .sortBy(_.startTime)
-        .map(_.id)
-    }
-
     def getNewPredictions(
       horizonDays: Option[Int],
       batchSize: Option[Int],
@@ -48,31 +34,42 @@ object PredictorService {
 
       for {
         processedEventsIds <- state.getState
-        fetchedEvents <- deichman.eventRefs
-        eventsForProcessing = getEventsIdsForHorizon(
-          fetchedEvents,
-          processedEventsIds,
-          realHorizonDays,
+        fetchedEvents <- deichman.eventRefs(
+          timeWindow = TimeWindow.nextN(realHorizonDays),
+          limit = None,
         )
         fetchedEventIds = fetchedEvents.map(_.id).toSet
+        _ <- ZIO.logInfo(
+          s"Fetched ${fetchedEventIds.size} events: ${fetchedEventIds.mkString("[", ", ", "]")}"
+        )
+        eventsForProcessing = fetchedEvents
+          .filterNot(event => processedEventsIds.contains(event.id))
+          .sortBy(_.startTime)
+          .take(realBatchSize)
+          .map(_.id)
+        _ <- ZIO.logInfo(
+          s"Processing ${eventsForProcessing.size} events: ${eventsForProcessing.mkString("[", ", ", "]")}"
+        )
         nextState = processedEventsIds.intersect(fetchedEventIds).union(eventsForProcessing.toSet)
-        _ <- ZIO.logInfo(s"New events inside in horizon: ${eventsForProcessing.size}")
-        result <- topNPredictions(eventsForProcessing, realBatchSize)
+        result <- predictionsAboveThreshold(eventsForProcessing)
+        _ <- ZIO.logInfo(s"Got ${result.size} predictions above threshold")
+        _ <- ZIO.logInfo(
+          s"Next state (${nextState.size} events): ${nextState.mkString("[", ", ", "]")}"
+        )
         _ <- state.setState(nextState)
       } yield result
     }
 
-    private def topNPredictions(
-      eventIds: Chunk[String],
-      n: Int,
+    private def predictionsAboveThreshold(
+      eventIds: Chunk[String]
     ): ZIO[Scope, Throwable, List[PromptedPrediction]] = eventIds
       .mapZIOPar { eventId =>
         deichman
           .getEvent(eventId)
           .flatMap(event => vertexAI.predictChatPrompt(event.description))
           .tap(prediction =>
-            ZIO.logDebug(
-              s"Event $eventId was proceed with the result: ${prediction.map(_.toJson)}"
+            ZIO.logInfo(
+              s"Event $eventId processed with the result: ${prediction.map(_.toJson)}"
             )
           )
       }
@@ -81,8 +78,9 @@ object PredictorService {
           case Some(promptedPrediction)
               if promptedPrediction.percentage >= config.minimalEventMatchProbability =>
             Some(promptedPrediction)
-          case _ => None
-        }.sortBy(_.percentage)(Ordering[Int].reverse).take(n).toList
+          case _ =>
+            None
+        }.toList
       }
 
   }
