@@ -43,7 +43,7 @@ object GcsService {
 
   }
 
-  val layer: RLayer[Scope with GcsConfig, GcsService] = ZLayer {
+  val layer: RLayer[Scope & GcsConfig, GcsService] = ZLayer {
     for {
       config <- ZIO.service[GcsConfig]
       storage <- ZIO.fromAutoCloseable(

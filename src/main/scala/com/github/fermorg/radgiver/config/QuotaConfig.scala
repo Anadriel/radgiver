@@ -3,7 +3,7 @@ package com.github.fermorg.radgiver.config
 import zio.{Config, Duration}
 import zio.config.magnolia.deriveConfig
 
-import scala.jdk.DurationConverters._
+import scala.jdk.DurationConverters.*
 
 case class QuotaConfig(count: Int, duration: Duration)
 

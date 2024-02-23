@@ -114,7 +114,7 @@ object HttpHandler:
   )
 
   val routes: HttpApp[
-    PredictorService with GcsService with DeichmanApiService with VertexAIService with Scope
+    PredictorService & GcsService & DeichmanApiService & VertexAIService & Scope
   ] =
     (adviserApp ++ predictApp ++ eventsApp ++ blobsApp)
       .handleError(e =>

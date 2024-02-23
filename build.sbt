@@ -29,8 +29,12 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.5.0",
 )
 
+// Compiler
+tpolecatScalacOptions += ScalacOptions.sourceFuture
+
 // Docker
 import com.typesafe.sbt.packager.docker.{Cmd, DockerPermissionStrategy}
+import org.typelevel.scalacoptions.ScalacOptions
 
 enablePlugins(JavaAppPackaging, LauncherJarPlugin, DockerPlugin)
 

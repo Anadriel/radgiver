@@ -91,7 +91,7 @@ object VertexAIService {
 
   }
 
-  val layer: RLayer[Scope with VertexAIConfig, VertexAIService] = ZLayer {
+  val layer: RLayer[Scope & VertexAIConfig, VertexAIService] = ZLayer {
     for {
       config <- ZIO.service[VertexAIConfig]
       predictionServiceSettings = PredictionServiceSettings

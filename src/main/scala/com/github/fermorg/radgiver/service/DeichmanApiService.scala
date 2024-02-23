@@ -141,7 +141,7 @@ object DeichmanApiService {
 
   }
 
-  val layer: RLayer[DeichmanApiConfig with Client with Scope, DeichmanApiService] = ZLayer {
+  val layer: RLayer[DeichmanApiConfig & Client & Scope, DeichmanApiService] = ZLayer {
     for {
       config <- ZIO.service[DeichmanApiConfig]
       client <- ZIO.service[Client]

@@ -49,14 +49,14 @@ object PredictorService {
           s"Available for processing ${eventsForProcessing.size} events: ${eventsForProcessing
               .mkString("[", ", ", "]")}"
         )
-        result <- predictionsAndNewState(eventsForProcessing, realBatchSize)
-        nextState = processedEventsIds.intersect(fetchedEventIds).union(result._2.toSet)
-        _ <- ZIO.logInfo(s"Got ${result._1.size} predictions above threshold")
+        (predictions, newState) <- predictionsAndNewState(eventsForProcessing, realBatchSize)
+        nextState = processedEventsIds.intersect(fetchedEventIds).union(newState.toSet)
+        _ <- ZIO.logInfo(s"Got ${predictions.size} predictions above threshold")
         _ <- ZIO.logInfo(
           s"Next state (${nextState.size} events): ${nextState.mkString("[", ", ", "]")}"
         )
         _ <- state.setState(nextState)
-      } yield result._1
+      } yield predictions
     }
 
     private def predictionsAndNewState(
@@ -99,7 +99,7 @@ object PredictorService {
   }
 
   val layer: RLayer[
-    DeichmanApiService with StateService with VertexAIService with PredictorConfig,
+    DeichmanApiService & StateService & VertexAIService & PredictorConfig,
     PredictorService,
   ] =
     ZLayer {

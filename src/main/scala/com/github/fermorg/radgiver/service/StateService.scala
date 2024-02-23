@@ -32,7 +32,7 @@ object StateService {
 
   }
 
-  val layer: RLayer[GcsService with StateConfig, StateService] = ZLayer {
+  val layer: RLayer[GcsService & StateConfig, StateService] = ZLayer {
     for {
       gcs <- ZIO.service[GcsService]
       config <- ZIO.service[StateConfig]

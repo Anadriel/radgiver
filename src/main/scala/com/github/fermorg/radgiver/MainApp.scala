@@ -65,7 +65,7 @@ object MainApp extends ZIOAppDefault:
       ++ PredictorConfig.layer
   ) >>> PredictorService.layer
 
-  def run: ZIO[Environment with ZIOAppArgs with Scope, Throwable, Any] = ZIO
+  def run: ZIO[Environment & ZIOAppArgs & Scope, Throwable, Any] = ZIO
     .service[Server]
     .flatMap { server =>
       ZIO.logInfo(s"Server live at ${server.port}") *> ZIO.never
