@@ -1,6 +1,6 @@
 name := "radgiver"
 organization := "com.github.fermorg"
-scalaVersion := "3.3.1"
+scalaVersion := "3.3.3"
 
 // Versioning
 inThisBuild(
@@ -21,12 +21,12 @@ libraryDependencies ++= Seq(
   "com.softwaremill.quicklens" %% "quicklens" % "1.9.7",
   "com.github.jwt-scala" %% "jwt-zio-json" % "10.0.0",
   "nl.vroste" %% "rezilience" % "0.9.4",
-  "com.google.cloud" % "google-cloud-storage" % "2.34.0",
-  "com.google.cloud" % "google-cloud-aiplatform" % "3.36.0",
+  "com.google.cloud" % "google-cloud-storage" % "2.35.0",
+  "com.google.cloud" % "google-cloud-aiplatform" % "3.38.0",
   "org.slf4j" % "log4j-over-slf4j" % "2.0.12",
   "org.slf4j" % "jcl-over-slf4j" % "2.0.12",
   "org.slf4j" % "jul-to-slf4j" % "2.0.12",
-  "ch.qos.logback" % "logback-classic" % "1.5.0",
+  "ch.qos.logback" % "logback-classic" % "1.5.3",
 )
 
 // Compiler
